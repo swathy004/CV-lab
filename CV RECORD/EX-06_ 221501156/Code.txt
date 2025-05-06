@@ -1,0 +1,30 @@
+import cv2, time, numpy as np, names
+from google.colab.patches import cv2_imshow
+
+image_path = "/content/groupface.jpg"
+img = cv2.imread(image_path)
+original = img.copy()
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+
+start = time.time()
+faces = face_cascade.detectMultiScale(gray, 1.1, 5)
+used_names = set()
+
+def get_unique_name():
+    while True:
+        name = names.get_first_name()
+        if name not in used_names:
+            used_names.add(name)
+            return name
+
+for (x, y, w, h) in faces:
+    name = get_unique_name()
+    cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    cv2.putText(img, name, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+elapsed = round(time.time() - start, 2)
+cv2.putText(img, f"Time taken: {elapsed} seconds", (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+
+combined = np.hstack((original, img))
+cv2_imshow(combined)

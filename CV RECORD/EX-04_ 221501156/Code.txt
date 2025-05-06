@@ -1,0 +1,41 @@
+import torch
+import cv2
+import os
+from google.colab.patches import cv2_imshow
+
+# Load YOLOv5 model
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+
+# Image path
+image_path = "/content/old_people_walking.jpg"
+
+if not os.path.exists(image_path):
+    raise FileNotFoundError(f"Error: Image file '{image_path}' not found.")
+
+# Load image
+img = cv2.imread(image_path)
+if img is None:
+    raise ValueError("Error: Unable to load the image.")
+
+# Convert to RGB
+img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+# Run inference
+results = model(img_rgb)
+detections = results.pandas().xyxy[0]
+
+# Optional: Filter for specific classes only (e.g., 'person')
+# detections = detections[detections['name'] == 'person']
+
+# Draw bounding boxes
+for _, row in detections.iterrows():
+    x1, y1, x2, y2 = int(row['xmin']), int(row['ymin']), int(row['xmax']), int(row['ymax'])
+    conf, name = row['confidence'], row['name']
+
+    # Draw rectangle and label
+    cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    label = f"{name} {conf:.2f}"
+    cv2.putText(img, label, (x1, max(15, y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+# Show image in Colab
+cv2_imshow(img)
